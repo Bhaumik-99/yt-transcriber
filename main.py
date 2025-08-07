@@ -1,3 +1,20 @@
+#!/usr/bin/env python3
+"""
+Video Fact Classification Script
+
+This script processes a CSV file containing video URLs and facts, downloads audio from videos,
+transcribes the audio using Whisper, and classifies facts as real or myth using Ollama LLaMA 2.
+
+Requirements:
+- yt-dlp
+- openai-whisper
+- pandas
+- ollama (CLI tool installed and running)
+
+Usage:
+    python script.py input.csv output.csv
+"""
+
 import os
 import sys
 import csv
@@ -16,6 +33,8 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
 class VideoFactProcessor:
     def __init__(self, model_name="llama2"):
         """Initialize the processor with Whisper model and Ollama configuration."""
@@ -73,7 +92,8 @@ class VideoFactProcessor:
         except Exception as e:
             logger.error(f"Ollama connection test failed: {e}")
             raise
-def download_audio(self, video_url, output_path):
+    
+    def download_audio(self, video_url, output_path):
         """Download audio from video URL using yt-dlp."""
         try:
             # Configure yt-dlp options
@@ -102,7 +122,8 @@ def download_audio(self, video_url, output_path):
         except Exception as e:
             logger.error(f"Failed to download audio from {video_url}: {e}")
             return None
-def transcribe_audio(self, audio_path):
+    
+    def transcribe_audio(self, audio_path):
         """Transcribe audio using Whisper."""
         try:
             logger.info(f"Transcribing audio: {audio_path}")
@@ -152,7 +173,8 @@ def transcribe_audio(self, audio_path):
         except Exception as e:
             logger.error(f"Failed to classify fact: {e}")
             return None
-def cleanup_temp_file(self, file_path):
+    
+    def cleanup_temp_file(self, file_path):
         """Clean up temporary audio files."""
         try:
             if file_path and os.path.exists(file_path):
@@ -232,8 +254,8 @@ def cleanup_temp_file(self, file_path):
         except Exception as e:
             logger.error(f"Error processing CSV: {e}")
             raise
-            
-def cleanup(self):
+    
+    def cleanup(self):
         """Clean up temporary directory."""
         try:
             import shutil
@@ -241,13 +263,17 @@ def cleanup(self):
             logger.info(f"Cleaned up temporary directory: {self.temp_dir}")
         except Exception as e:
             logger.warning(f"Failed to clean up temporary directory: {e}")
+
+
 def main():
     """Main function to run the video fact classification script."""
+    if len(sys.argv) != 3:
+        print("Usage: python script.py <input_csv> <output_csv>")
+        print("Example: python script.py input.csv output.csv")
+        sys.exit(1)
     
-    # ========== CHANGE THESE FILENAMES ==========
-    input_csv_path = "input.csv"      # Change this to your input CSV filename
-    output_csv_path = "output.csv"    # Change this to your desired output CSV filename
-    # ============================================
+    input_csv_path = sys.argv[1]
+    output_csv_path = sys.argv[2]
     
     # Validate input file exists
     if not os.path.exists(input_csv_path):
