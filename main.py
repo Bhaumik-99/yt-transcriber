@@ -152,3 +152,83 @@ def transcribe_audio(self, audio_path):
         except Exception as e:
             logger.error(f"Failed to classify fact: {e}")
             return None
+def cleanup_temp_file(self, file_path):
+        """Clean up temporary audio files."""
+        try:
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
+                logger.info(f"Cleaned up temporary file: {file_path}")
+        except Exception as e:
+            logger.warning(f"Failed to clean up temporary file {file_path}: {e}")
+    
+    def process_csv(self, input_csv_path, output_csv_path):
+        """Process the input CSV and create output CSV with results."""
+        try:
+            # Read input CSV
+            logger.info(f"Reading input CSV: {input_csv_path}")
+            df = pd.read_csv(input_csv_path)
+            
+            # Validate required columns
+            required_columns = ['video_url', 'fact']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                raise ValueError(f"Missing required columns: {missing_columns}")
+            
+            # Add new columns
+            df['transcription'] = ''
+            df['fact_is_real'] = ''
+            
+            logger.info(f"Processing {len(df)} rows...")
+            
+            # Process each row
+            for index, row in df.iterrows():
+                logger.info(f"Processing row {index + 1}/{len(df)}")
+                
+                video_url = row['video_url']
+                fact = row['fact']
+                
+                # Step 1: Download audio
+                audio_file = None
+                try:
+                    temp_audio_path = os.path.join(self.temp_dir, f"audio_{index}")
+                    audio_file = self.download_audio(video_url, temp_audio_path)
+                    
+                    if audio_file:
+                        # Step 2: Transcribe audio
+                        transcription = self.transcribe_audio(audio_file)
+                        if transcription:
+                            df.at[index, 'transcription'] = transcription
+                        else:
+                            df.at[index, 'transcription'] = "TRANSCRIPTION_FAILED"
+                    else:
+                        df.at[index, 'transcription'] = "DOWNLOAD_FAILED"
+                        
+                except Exception as e:
+                    logger.error(f"Error processing audio for row {index + 1}: {e}")
+                    df.at[index, 'transcription'] = "ERROR"
+                finally:
+                    # Clean up audio file
+                    if audio_file:
+                        self.cleanup_temp_file(audio_file)
+                
+                # Step 3: Classify fact
+                try:
+                    classification = self.classify_fact(fact)
+                    if classification is not None:
+                        df.at[index, 'fact_is_real'] = classification
+                    else:
+                        df.at[index, 'fact_is_real'] = "CLASSIFICATION_FAILED"
+                except Exception as e:
+                    logger.error(f"Error classifying fact for row {index + 1}: {e}")
+                    df.at[index, 'fact_is_real'] = "ERROR"
+                
+                logger.info(f"Completed processing row {index + 1}")
+            
+            # Write output CSV
+            logger.info(f"Writing output CSV: {output_csv_path}")
+            df.to_csv(output_csv_path, index=False)
+            logger.info("Processing completed successfully!")
+            
+        except Exception as e:
+            logger.error(f"Error processing CSV: {e}")
+            raise
