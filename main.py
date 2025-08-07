@@ -102,3 +102,53 @@ def download_audio(self, video_url, output_path):
         except Exception as e:
             logger.error(f"Failed to download audio from {video_url}: {e}")
             return None
+def transcribe_audio(self, audio_path):
+        """Transcribe audio using Whisper."""
+        try:
+            logger.info(f"Transcribing audio: {audio_path}")
+            result = self.whisper_model.transcribe(audio_path)
+            transcription = result["text"].strip()
+            logger.info("Audio transcription completed")
+            return transcription
+        except Exception as e:
+            logger.error(f"Failed to transcribe audio {audio_path}: {e}")
+            return None
+    
+    def classify_fact(self, fact):
+        """Classify fact as real (1) or myth (0) using Ollama LLaMA 2."""
+        try:
+            # Prepare the prompt
+            prompt = f'Given the fact: "{fact}"\nIs this fact real or myth? Answer only with 1 for real, 0 for myth.'
+            
+            # Run Ollama command
+            result = subprocess.run(
+                ["ollama", "run", self.model_name],
+                input=prompt,
+                capture_output=True,
+                text=True,
+                timeout=120  # 2 minutes timeout
+            )
+            
+            if result.returncode != 0:
+                raise Exception(f"Ollama command failed: {result.stderr}")
+            
+            # Parse response to extract 0 or 1
+            response = result.stdout.strip()
+            logger.info(f"Ollama response: {response}")
+            
+            # Look for 0 or 1 in the response
+            match = re.search(r'\b[01]\b', response)
+            if match:
+                classification = int(match.group())
+                logger.info(f"Fact classification: {classification}")
+                return classification
+            else:
+                logger.warning(f"Could not parse classification from response: {response}")
+                return None
+                
+        except subprocess.TimeoutExpired:
+            logger.error("Timeout while waiting for Ollama response")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to classify fact: {e}")
+            return None
