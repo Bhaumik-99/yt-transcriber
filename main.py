@@ -73,3 +73,32 @@ class VideoFactProcessor:
         except Exception as e:
             logger.error(f"Ollama connection test failed: {e}")
             raise
+def download_audio(self, video_url, output_path):
+        """Download audio from video URL using yt-dlp."""
+        try:
+            # Configure yt-dlp options
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'wav',
+                }],
+                'outtmpl': output_path,
+                'quiet': True,
+                'no_warnings': True,
+            }
+            
+            # Download audio
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([video_url])
+            
+            # yt-dlp adds .wav extension automatically
+            wav_path = output_path + '.wav'
+            if os.path.exists(wav_path):
+                return wav_path
+            else:
+                raise Exception("Audio file was not created")
+                
+        except Exception as e:
+            logger.error(f"Failed to download audio from {video_url}: {e}")
+            return None
