@@ -232,3 +232,12 @@ def cleanup_temp_file(self, file_path):
         except Exception as e:
             logger.error(f"Error processing CSV: {e}")
             raise
+            
+def cleanup(self):
+        """Clean up temporary directory."""
+        try:
+            import shutil
+            shutil.rmtree(self.temp_dir)
+            logger.info(f"Cleaned up temporary directory: {self.temp_dir}")
+        except Exception as e:
+            logger.warning(f"Failed to clean up temporary directory: {e}")
