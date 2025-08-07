@@ -241,3 +241,40 @@ def cleanup(self):
             logger.info(f"Cleaned up temporary directory: {self.temp_dir}")
         except Exception as e:
             logger.warning(f"Failed to clean up temporary directory: {e}")
+def main():
+    """Main function to run the video fact classification script."""
+    
+    # ========== CHANGE THESE FILENAMES ==========
+    input_csv_path = "input.csv"      # Change this to your input CSV filename
+    output_csv_path = "output.csv"    # Change this to your desired output CSV filename
+    # ============================================
+    
+    # Validate input file exists
+    if not os.path.exists(input_csv_path):
+        logger.error(f"Input CSV file not found: {input_csv_path}")
+        sys.exit(1)
+    
+    # Initialize processor
+    processor = None
+    try:
+        processor = VideoFactProcessor(model_name="llama2")
+        
+        # Process the CSV
+        processor.process_csv(input_csv_path, output_csv_path)
+        
+        logger.info("Script completed successfully!")
+        
+    except KeyboardInterrupt:
+        logger.info("Script interrupted by user")
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"Script failed: {e}")
+        sys.exit(1)
+    finally:
+        # Clean up
+        if processor:
+            processor.cleanup()
+
+
+if __name__ == "__main__":
+    main()
